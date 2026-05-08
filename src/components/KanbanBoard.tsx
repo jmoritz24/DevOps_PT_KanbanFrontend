@@ -3,7 +3,7 @@ import type { Item } from '../data/types';
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import KanbanItemCard from './KanbanItemCard';
-import KanbanSheet from './KanbanSheet'; // Import the new component
+import KanbanSheet from './KanbanSheet';
 
 function KanbanBoard() {
   const [items, setItems] = useState<Item[]>([]);
@@ -19,8 +19,8 @@ function KanbanBoard() {
       }
       const data: Item[] = await response.json();
       setItems(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setLoading(false);
       toast("The items have been loaded successfully");
@@ -28,7 +28,23 @@ function KanbanBoard() {
   };
 
   useEffect(() => {
-    fetchItems();
+    const loadItems = async () => {
+      try {
+        const response = await fetch('https://hb-kanban-backend.hb-user.workers.dev/items');
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+        const data: Item[] = await response.json();
+        setItems(data);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } finally {
+        setLoading(false);
+        toast("The items have been loaded successfully");
+      }
+    };
+
+    loadItems();
   }, []);
 
   if (loading) {
@@ -50,7 +66,7 @@ function KanbanBoard() {
   return (
     <div>
         <div className="container mx-auto p-4">
-          <div className="flex justify-between items-center mb-4"> {/* Flex container for title and button */}
+          <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold">Kanban Board</h1>
             <KanbanSheet fetchItems={fetchItems} open={showNewItemSheet} onOpenChange={setShowNewItemSheet} />
           </div>
@@ -102,7 +118,6 @@ function KanbanBoard() {
 
     const originalState = itemToMove.state;
 
-    // Optimistically update state
     setItems(items.map(item =>
       item.id === parseInt(itemId, 10) ? { ...item, state: newState } : item
     ));
@@ -121,12 +136,11 @@ function KanbanBoard() {
       }
 
       toast.success(`Item ${itemId} moved to ${newState}`);
-      fetchItems(); // Reload items to ensure consistency
+      fetchItems();
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating item state:', error);
-      toast.error(`Failed to move item ${itemId}: ${error.message}`);
-      // Revert state on error
+      toast.error(`Failed to move item ${itemId}: ${(error as Error).message}`);
       setItems(items.map(item =>
         item.id === parseInt(itemId, 10) ? { ...item, state: originalState } : item
       ));

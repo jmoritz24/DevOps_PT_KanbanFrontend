@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import KanbanItemPriority from './KanbanItemPriority';
 import type { Item } from '../data/types';
 
-
 interface ItemData {
   title: string;
   description?: string;
@@ -20,7 +19,7 @@ interface ItemData {
 }
 
 interface KanbanItemProps {
-  item?: Item; // Optional item prop for editing
+  item?: Item;
   onSave: () => void;
   onCancel: () => void;
 }
@@ -29,39 +28,40 @@ function KanbanItem({ item, onSave, onCancel }: KanbanItemProps) {
   const [itemData, setItemData] = useState<ItemData>({
     title: '',
     description: '',
-    type: 'User Story', // Default value
-    estimate: 1, // Default value
-    state: 'Open', // Default value
+    type: 'User Story',
+    estimate: 1,
+    state: 'Open',
     assigned_user: '',
-    priority: 'Low', // Default value
+    priority: 'Low',
   });
 
   useEffect(() => {
-    if (item) {
-      // Populate form fields if item prop is provided (editing)
-      setItemData({
-        title: item.title,
-        description: item.description,
-        type: item.type,
-        estimate: item.estimate,
-        state: item.state,
-        assigned_user: item.assigned_user,
-        priority: item.priority,
-      });
-    } else {
-      // Clear form fields if no item prop (creating new)
-      setItemData({
-        title: '',
-        description: '',
-        type: 'User Story',
-        estimate: 1,
-        state: 'Open',
-        assigned_user: '',
-        priority: 'Low',
-      });
-    }
-  }, [item]);
+    const populate = () => {
+      if (item) {
+        setItemData({
+          title: item.title,
+          description: item.description,
+          type: item.type,
+          estimate: item.estimate,
+          state: item.state,
+          assigned_user: item.assigned_user,
+          priority: item.priority,
+        });
+      } else {
+        setItemData({
+          title: '',
+          description: '',
+          type: 'User Story',
+          estimate: 1,
+          state: 'Open',
+          assigned_user: '',
+          priority: 'Low',
+        });
+      }
+    };
 
+    populate();
+  }, [item]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -115,7 +115,9 @@ function KanbanItem({ item, onSave, onCancel }: KanbanItemProps) {
     }
 
     try {
-      const url = item ? `https://hb-kanban-backend.hb-user.workers.dev/items/${item.id}` : 'https://hb-kanban-backend.hb-user.workers.dev/items';
+      const url = item
+        ? `https://hb-kanban-backend.hb-user.workers.dev/items/${item.id}`
+        : 'https://hb-kanban-backend.hb-user.workers.dev/items';
       const method = item ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -133,11 +135,11 @@ function KanbanItem({ item, onSave, onCancel }: KanbanItemProps) {
       const result = await response.json();
       console.log('Item saved:', result);
       toast.success(`Item ${item ? 'updated' : 'created'} successfully!`);
-      onSave(); // Notify parent component to refresh/close form
+      onSave();
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving item:', error);
-      toast.error(`Failed to save item: ${error.message}`);
+      toast.error(`Failed to save item: ${(error as Error).message}`);
     }
   };
 
@@ -170,7 +172,7 @@ function KanbanItem({ item, onSave, onCancel }: KanbanItemProps) {
       </div>
       <div className="grid gap-2">
         <Label htmlFor="state">State</Label>
-         <Select value={itemData.state} onValueChange={(value: "Open" | "In Progress" | "In Validation" | "Done") => handleSelectChange('state', value)}>
+        <Select value={itemData.state} onValueChange={(value: "Open" | "In Progress" | "In Validation" | "Done") => handleSelectChange('state', value)}>
           <SelectTrigger>
             <SelectValue placeholder="Select state" />
           </SelectTrigger>
@@ -188,7 +190,7 @@ function KanbanItem({ item, onSave, onCancel }: KanbanItemProps) {
       </div>
       <div className="grid gap-2">
         <Label htmlFor="priority">Priority</Label>
-         <Select value={itemData.priority} onValueChange={(value: "High" | "Middle" | "Low") => handleSelectChange('priority', value)}>
+        <Select value={itemData.priority} onValueChange={(value: "High" | "Middle" | "Low") => handleSelectChange('priority', value)}>
           <SelectTrigger>
             <SelectValue placeholder="Select priority" />
           </SelectTrigger>
